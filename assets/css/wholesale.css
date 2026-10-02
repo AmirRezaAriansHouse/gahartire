@@ -1,0 +1,83 @@
+/* صفحه فروش عمده */
+.ws-hero {
+    background: linear-gradient(135deg, #1b1d21 0%, #2a2d34 100%);
+    color: #fff; border-radius: 28px; padding: 44px 40px;
+    position: relative; overflow: hidden;
+}
+.ws-hero::after {
+    content: ""; position: absolute; left: -70px; bottom: -90px;
+    width: 280px; height: 280px; border-radius: 50%;
+    border: 36px solid rgba(239, 64, 86, .18);
+}
+.ws-hero > * { position: relative; z-index: 1; }
+.ws-hero .ws-badge { background: rgba(239, 64, 86, .18); color: #ff8a99; padding: 7px 16px; border-radius: 50px; font-weight: 700; font-size: .85rem; display: inline-block; }
+.ws-hero h1 { font-weight: 850; line-height: 1.6; }
+.ws-hero p { color: #cbd2dc; line-height: 2; max-width: 640px; }
+
+.ws-card { background: #fff; border-radius: 20px; padding: 22px 18px; height: 100%; box-shadow: 0 4px 16px rgba(0, 0, 0, .05); text-align: center; }
+.ws-ico { width: 56px; height: 56px; border-radius: 50%; background: #ffe8ec; color: var(--gt-red); display: inline-flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 12px; }
+.ws-card h5 { font-weight: 800; font-size: 1rem; }
+.ws-card p { color: #6b7280; font-size: .86rem; line-height: 1.9; margin: 0; }
+
+.ws-step { display: flex; gap: 14px; align-items: flex-start; background: #fff; border-radius: 18px; padding: 18px; box-shadow: 0 4px 16px rgba(0, 0, 0, .05); height: 100%; }
+.ws-num { flex: 0 0 42px; height: 42px; border-radius: 50%; background: var(--gt-red); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.ws-step h6 { font-weight: 800; margin-bottom: 4px; }
+.ws-step p { margin: 0; color: #6b7280; font-size: .86rem; line-height: 1.9; }
+
+.ws-form-box { background: #fff; border-radius: 28px; padding: 36px; box-shadow: 0 15px 40px rgba(0, 0, 0, .05); }
+.ws-form-box .form-control, .ws-form-box .form-select { border-radius: 14px; padding: .75rem 1rem; background: #f7f8fa; border: 2px solid transparent; }
+.ws-form-box .form-control:focus, .ws-form-box .form-select:focus { background: #fff; border-color: var(--gt-red); box-shadow: 0 6px 18px rgba(239, 64, 86, .12); }
+.ws-form-box label { font-weight: 700; font-size: .88rem; margin-bottom: .35rem; }
+
+.ws-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border-radius: 50px; padding: 10px 18px; font-weight: 700; font-size: .88rem; color: #333; text-decoration: none; box-shadow: 0 3px 12px rgba(0, 0, 0, .06); transition: .25s; }
+.ws-chip:hover { color: var(--gt-red); transform: translateY(-2px); }
+
+.accordion-item { border: 0; border-radius: 16px !important; overflow: hidden; margin-bottom: 10px; box-shadow: 0 3px 12px rgba(0, 0, 0, .05); }
+.accordion-button { font-weight: 700; }
+.accordion-button:not(.collapsed) { color: var(--gt-red); background: #fff4f5; box-shadow: none; }
+.accordion-button:focus { box-shadow: none; }
+
+@media (max-width: 767.98px) {
+    .ws-hero { padding: 26px 20px; border-radius: 22px; }
+    .ws-hero h1 { font-size: 1.4rem; }
+    .ws-hero p { font-size: .92rem; }
+    .ws-hero .btn { width: 100%; }
+    .ws-card { padding: 16px 10px; border-radius: 16px; }
+    .ws-ico { width: 46px; height: 46px; font-size: 1.1rem; margin-bottom: 8px; }
+    .ws-card h5 { font-size: .9rem; }
+    .ws-card p { font-size: .76rem; line-height: 1.75; }
+    .ws-form-box { padding: 20px 16px; border-radius: 22px; }
+    .ws-chip { padding: 8px 14px; font-size: .82rem; }
+    .accordion-button { font-size: .92rem; padding: .9rem 1rem; }
+}
+
+/* فرم چندمدلی */
+.ws-points { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.ws-points li { color: #e5e9f0; font-size: .92rem; font-weight: 700; }
+.ws-points i { color: #ff8a99; margin-left: 6px; }
+
+.ws-list-title { font-size: 1rem; font-weight: 800; margin: 6px 0 12px; }
+.ws-row { display: grid; grid-template-columns: 1fr 210px 44px; gap: 12px; align-items: end; border: 2px solid #eef0f3; border-radius: 18px; padding: 14px; background: #fcfcfd; }
+.ws-form-box .ws-row .form-control, .ws-form-box .ws-row .form-select { background: #fff; border-color: #e5e7eb; }
+.ws-form-box .ws-row .form-control:focus, .ws-form-box .ws-row .form-select:focus { border-color: var(--gt-red); }
+.ws-form-box .ws-row .is-invalid { border-color: #dc3545; }
+.ws-qty { display: flex; gap: 6px; align-items: stretch; }
+.ws-qty .form-control { text-align: center; min-width: 0; }
+.ws-qbtn { flex: 0 0 44px; border: 2px solid #e5e7eb; background: #fff; border-radius: 14px; font-size: 1.25rem; font-weight: 800; line-height: 1; color: #333; }
+.ws-qbtn:hover { border-color: var(--gt-red); color: var(--gt-red); }
+.ws-remove { width: 44px; height: 44px; border: 0; border-radius: 14px; background: #f3f4f6; color: #6b7280; font-size: 1.5rem; line-height: 1; }
+.ws-remove:hover { background: #ffe8ec; color: var(--gt-red); }
+.ws-summary { font-weight: 800; font-size: .92rem; color: var(--gt-red); }
+
+.ws-article { display: flex; align-items: center; gap: 16px; background: #fff; border-radius: 20px; padding: 18px 20px; box-shadow: 0 4px 16px rgba(0, 0, 0, .05); transition: .25s; }
+.ws-article:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0, 0, 0, .08); }
+.ws-article .ws-ico { flex: 0 0 56px; margin: 0; }
+
+@media (max-width: 767.98px) {
+    .ws-row { grid-template-columns: 1fr 44px; }
+    .ws-row-model { grid-column: 1 / -1; }
+    .ws-row-qty { grid-column: 1; }
+    .ws-remove { grid-column: 2; grid-row: 2; }
+    .ws-form-box { padding: 22px 16px; }
+}
+#wsOrder { scroll-margin-top: 110px; }
