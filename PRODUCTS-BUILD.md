@@ -21,7 +21,7 @@ python build.py
   "size": "185/65R14",
   "brand": "بارز",
   "category": 5,
-  "image": "assets/images/pride-165-65r13-gahar-tire.jpg",
+  "image": "assets/images/pride-165-65r13-gahar-tire.webp",
   "link": null,
   "available": true
 }
@@ -89,7 +89,7 @@ python build.py
 | دسته‌بندی‌ها | `categories/<slug>.html` (`passenger-tires`, `pickup-tires`, `offroad-tires`, `heavy-tires`) | `build.py` ← `CATEGORY_LANDINGS` |
 | مقالات | `articles/<id>.html` | `articles.json` |
 
-**مسیرهای داخلی:** در منبع‌ها (قالب‌ها، پارشال‌ها، صفحه‌های دستی) همهٔ لینک‌ها را نسبت به ریشهٔ سایت بنویسید، مثل `assets/img.jpg` یا `products.html`؛ build برای صفحه‌های داخل زیرپوشه خودش `../` اضافه می‌کند (برای `404.html` مسیر مطلق `/`).
+**مسیرهای داخلی:** در منبع‌ها (قالب‌ها، پارشال‌ها، صفحه‌های دستی) همهٔ لینک‌ها را نسبت به ریشهٔ سایت بنویسید، مثل `assets/img.webp` یا `products.html`؛ build برای صفحه‌های داخل زیرپوشه خودش `../` اضافه می‌کند (برای `404.html` مسیر مطلق `/`).
 
 **آدرس‌های قدیمی:** چون سایت هنوز ایندکس نشده، فعلاً redirect لازم نیست و `redirects.json` خالی (`{}`) است. اگر بعد از ایندکس‌شدن slug یا مسیر صفحه‌ای را عوض کردید، یک خط `"آدرس-قدیمی.html": "products/آدرس-جدید.html"` به `redirects.json` اضافه کنید تا build در آدرس قدیمی یک صفحهٔ redirect بسازد. با `"redirect_stubs": false` در `seo.json` به‌جای آن فایل‌های `_redirects` و `redirects-apache.txt` برای redirect سمت سرور ساخته می‌شود.
 

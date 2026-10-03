@@ -80,7 +80,7 @@ def _render_product_card_raw(p):
     size = p.get("size", "").strip()
     brand = p.get("brand", "").strip()
     category = int(p.get("category", 5))
-    image = p.get("image") or "assets/images/pride-165-65r13-gahar-tire.jpg"
+    image = p.get("image") or "assets/images/pride-165-65r13-gahar-tire.webp"
     link = p.get("link")
     available = bool(p.get("available", True))
     description = p.get("description", "")
@@ -214,6 +214,17 @@ def process_images(s):
                 tag = tag[:-1].rstrip() + ' loading="lazy">'
         return tag
     return re.sub(r"<img\b[^>]*>", fix, s)
+
+
+def ensure_zoom(s):
+    """اسکریپت زوم تصویر (لایت‌باکس) را در صفحه‌هایی که تصویر محصول/گالری دارند اضافه می‌کند."""
+    if "zoom.js" in s or not ("style-main-img" in s or "gt-gallery" in s):
+        return s
+    m = re.search(r'src="((?:\.\./)*)assets/js/mobile\.js"', s)
+    if not m:
+        return s
+    tag = f'<script src="{m.group(1)}assets/js/zoom.js" defer></script>\n    '
+    return s.replace("</body>", tag + "</body>", 1)
 
 
 def process_icons_a11y(s):
@@ -913,6 +924,8 @@ def ld_script(obj):
 
 def og_image(path):
     """(آدرس مطلق، عرض، ارتفاع) برای تصویر؛ JPG/PNG اصلی را به WebP ترجیح می‌دهد (سازگاری بهتر با تلگرام/واتساپ)."""
+    if path and os.path.splitext(path)[1].lower() in (".jpg", ".jpeg", ".png") and os.path.exists(os.path.splitext(path)[0] + ".webp"):
+        path = os.path.splitext(path)[0] + ".webp"
     if not SITE_URL or not path or not os.path.exists(path):
         return None
     w = h = None
@@ -1207,6 +1220,7 @@ for page in all_pages:
                    s, flags=re.S)
     s = process_head(s)
     s = process_images(s)
+    s = ensure_zoom(s)
     s = process_icons_a11y(s)
     if page not in SEO_SKIP:
         cfg = SEO_PAGES.get(page, {})
