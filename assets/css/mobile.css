@@ -317,18 +317,78 @@ body { -webkit-tap-highlight-color: transparent; }
     .btn.btn-sm { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
 }
 
-/* ---- دکمهٔ «نمایش بیشتر» صفحهٔ محصولات: فاصلهٔ متعادل با گرید و بخش بعدی ---- */
+/* ============================================================
+   صفحهٔ محصولات — اصلاح موبایل (چیپ‌ها، کارت‌های بزرگ‌تر، نمایش بیشتر)
+   ============================================================ */
+/* دکمهٔ «نمایش بیشتر»: چسبیده به گرید، با فاصلهٔ متقارن از بخش بعد (همهٔ اندازه‌ها) */
+.gt-loadmore-wrap { padding-top: 1.75rem; padding-bottom: 0; }
+#loadMore { min-width: 260px; background: #fff; border-width: 1.5px; }
+.gt-guide-wrap { margin-top: 2rem !important; }
+
 @media (max-width: 767.98px) {
-    .gt-loadmore-wrap {
-        padding-top: 1.1rem !important;
-        padding-bottom: 1.5rem !important;
-        margin-top: .25rem;
+    /* چیپ‌های دسته‌بندی: شبکهٔ مرتب به‌جای اسکرول افقیِ بریده‌شده */
+    .scrollbar-hidden.gt-chips {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: .5rem !important;
+        overflow: visible !important;
+        margin: 0 !important; padding: 0 !important;
     }
-    #loadMore {
-        width: 100%;
-        max-width: 320px;
-        font-size: .85rem !important;
-        padding: .65rem 1rem !important;
+    .gt-chips a.btn {
+        width: 100%; min-height: 42px;
+        padding: .4rem .5rem !important;
+        font-size: .88rem !important;
+        background: #fff !important;
+        box-shadow: none !important;
+        border: 1px solid #e3e6ec !important;
     }
-    #loadMore:not(.d-none) { display: inline-flex !important; align-items: center; justify-content: center; }
+    .gt-chips a.btn:first-of-type { grid-column: 1 / -1; }
+    /* فعال بودن چیپ: رنگ قرمز */
+    .gt-chips a.btn.btn-digi-active { background: #ef4056 !important; color: #fff !important; border-color: #ef4056 !important; box-shadow: 0 4px 12px rgba(239, 64, 86, .22) !important; }
+
+    /* کارت‌ها بزرگ‌تر: فاصلهٔ کمتر، تصویر و متن درشت‌تر (طراحی همان است) */
+    .row.row-cols-2.g-3 { --bs-gutter-x: .5rem; --bs-gutter-y: .75rem; }
+    body .card-product .product-img-wrapper { padding: 6px !important; aspect-ratio: 1 / 1.08 !important; }
+    body .card-product .card-body { padding: .8rem .75rem .8rem !important; }
+    body .card-product .card-title { font-size: .95rem !important; min-height: 2.9em; }
+    body .card-product .pc-sub { font-size: .8rem; }
+    body .card-product .pc-stock { font-size: .68rem !important; margin: 8px !important; }
+    body .card-product .card-body .mt-auto .text-digi { font-size: .8rem !important; }
+    body .card-product .card-body .mt-auto .btn { font-size: .88rem !important; padding: .62rem .5rem !important; }
+
+    /* نمایش بیشتر: تمام‌عرض و همتراز با کارت‌ها */
+    .gt-loadmore-wrap { padding: 1.1rem 0 0 !important; }
+    #loadMore { width: 100%; max-width: none; min-height: 48px; font-size: .92rem !important; padding: .7rem 1rem !important; }
+    .gt-guide-wrap { margin-top: 1.5rem !important; }
 }
+
+
+/* ===== گالری صفحهٔ درباره ما ===== */
+.gt-gallery-grid { display: grid; gap: .75rem; grid-template-columns: 1fr; }
+.gt-gallery-item { margin: 0; border-radius: 1.25rem; overflow: hidden; background: #e9ecf1; box-shadow: 0 6px 18px rgba(20, 24, 40, .08); }
+.gt-gallery-item picture, .gt-gallery-item img { display: block; width: 100%; height: 100%; }
+.gt-gallery-item img { object-fit: cover; }
+.gt-g-tall { aspect-ratio: 3 / 4; }
+.gt-g-tall img { object-position: 50% 20%; }
+.gt-g-a, .gt-g-b { aspect-ratio: 16 / 7.5; }
+@media (min-width: 768px) {
+    .gt-gallery-grid { grid-template-columns: 1fr 2.1fr; grid-template-rows: 1fr 1fr; gap: 1rem; }
+    .gt-g-tall { grid-row: 1 / span 2; aspect-ratio: auto; min-height: 100%; }
+    .gt-g-a, .gt-g-b { aspect-ratio: auto; }
+    .gt-gallery-grid { height: 560px; }
+}
+
+/* ===== زوم تصویر (لایت‌باکس) ===== */
+.gt-zoom { position: fixed; inset: 0; z-index: 3000; display: none; align-items: center; justify-content: center; background: rgba(10, 12, 20, .93); overflow: hidden; }
+.gt-zoom.open { display: flex; }
+.gt-zoom-open { overflow: hidden; }
+.gt-zoom-img { max-width: 96vw; max-height: 92vh; object-fit: contain; touch-action: none; user-select: none; -webkit-user-drag: none; cursor: zoom-in; border-radius: .5rem; background: #fff0; will-change: transform; }
+.gt-zoom.is-zoomed .gt-zoom-img { cursor: grab; }
+.gt-zoom-close, .gt-zoom-nav { position: absolute; z-index: 2; border: 0; color: #fff; background: rgba(255, 255, 255, .16); width: 44px; height: 44px; border-radius: 50%; font-size: 1.9rem; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(4px); }
+.gt-zoom-close:hover, .gt-zoom-nav:hover { background: rgba(255, 255, 255, .3); }
+.gt-zoom-close { top: max(14px, env(safe-area-inset-top)); left: 14px; }
+.gt-zoom-nav { top: 50%; transform: translateY(-50%); display: none; }
+.gt-zoom.has-nav .gt-zoom-nav { display: flex; }
+.gt-zoom-prev { right: 14px; }
+.gt-zoom-next { left: 14px; }
+img[data-zoom], .style-main-img { cursor: zoom-in; }
