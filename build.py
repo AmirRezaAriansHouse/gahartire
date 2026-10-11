@@ -493,6 +493,76 @@ def _size_guide_published():
 SIZE_GUIDE_PUBLISHED = _size_guide_published()
 
 
+def load_brands():
+    try:
+        return json.loads(read("brands.json"))
+    except Exception:
+        return {}
+
+
+BRANDS = load_brands()
+
+
+def brand_section(p):
+    """متن واقعی دربارهٔ برند از brands.json؛ اگر خالی باشد چیزی نمی‌سازد."""
+    brand = p.get("brand", "").strip()
+    b = BRANDS.get(brand) or {}
+    summary = (b.get("summary") or "").strip()
+    points = [x.strip() for x in (b.get("points") or []) if x and x.strip()]
+    if not summary and not points:
+        return None
+    html = f'<h3 class="h6 fw-bold text-dark mt-4 mb-2">دربارهٔ برند {esc(brand)}:</h3>'
+    if summary:
+        html += "\n" + "\n".join(f"<p>{esc(x.strip())}</p>" for x in summary.split("\n") if x.strip())
+    if points:
+        html += "\n" + ul(points)
+    return html
+
+
+def faq_section(p, products):
+    """پرسش و پاسخ مخصوص هر محصول؛ فقط از داده‌های واقعی کاتالوگ و محاسبهٔ ریاضی سایز ساخته می‌شود."""
+    size = p.get("size", "").strip()
+    brand = p.get("brand", "").strip()
+    veh = vehicle_label(p.get("vehicle", ""))
+    if not size:
+        return None
+    key = _norm_size(size)
+    pool = [q for q in catalog_pages(products) if _norm_size(q.get("size")) == key]
+    brands = []
+    for q in pool:
+        b = q.get("brand", "").strip()
+        if b and b not in brands:
+            brands.append(b)
+    others = [b for b in brands if b != brand]
+    vehicles = []
+    for q in pool:
+        if q.get("brand", "").strip() == brand:
+            v = vehicle_label(q.get("vehicle", ""))
+            if v and v not in vehicles:
+                vehicles.append(v)
+    f = size_facts(size)
+    qa = []
+    if vehicles:
+        qa.append((f"لاستیک {size} برند {brand} برای کدام خودرو ثبت شده است؟",
+                   f"در کاتالوگ گهرتایر خرم‌آباد، این مدل برای {' و '.join(vehicles)} ثبت شده است."))
+    if f and f["metric"]:
+        qa.append((f"قطر کلی و ارتفاع دیواره لاستیک {size} چقدر است؟",
+                   f"ارتفاع دیواره حدود {num(f['side_mm'])} میلی‌متر و قطر کلی حدود {num(f['diam_mm'])} میلی‌متر است (محاسبهٔ اسمی از روی سایز)."))
+    if f:
+        qa.append((f"لاستیک {size} روی چه رینگی نصب می‌شود؟",
+                   f"قطر رینگ مناسب این سایز {num(f['rim_in'])} اینچ است."))
+    if others:
+        qa.append((f"سایز {size} را با چه برندهای دیگری دارید؟",
+                   f"علاوه بر {brand}، این سایز در کاتالوگ با برند {' و '.join(others)} هم ثبت شده است؛ برای مقایسهٔ قیمت و موجودی هر برند تماس بگیرید."))
+    stock = "این مدل در کاتالوگ به‌صورت موجود ثبت شده است؛ " if p.get("available") else ""
+    qa.append((f"قیمت لاستیک {size} {brand} چقدر است؟",
+               f"{stock}قیمت روز با تماس یا واتساپ اعلام می‌شود و در سایت ثبت نشده است."))
+    html = '<h3 class="h6 fw-bold text-dark mt-4 mb-2">پرسش‌های رایج دربارهٔ این مدل:</h3>'
+    for qn, an in qa:
+        html += f'\n<p class="mb-2"><strong>{esc(qn)}</strong><br>{esc(an)}</p>'
+    return html
+
+
 def build_caption(p, products=None):
     title = product_title(p)
     main_t = title.partition(" | ")[0]
@@ -533,6 +603,14 @@ def build_caption(p, products=None):
         cmp_html = diameter_comparison(p, products)
         if cmp_html:
             parts.append(cmp_html)
+
+    bs = brand_section(p)
+    if bs:
+        parts.append(bs)
+    if products:
+        faq = faq_section(p, products)
+        if faq:
+            parts.append(faq)
 
     # ۴) جملهٔ کوتاه راهنمای خرید (لینک به مقالهٔ سایز اگر منتشر شده باشد)
     guide = ('برای مطمئن‌شدن از سایز، <a href="articles/size-guide.html" class="text-decoration-none">راهنمای خواندن سایز لاستیک</a> را ببینید؛ '
