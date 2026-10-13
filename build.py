@@ -80,7 +80,7 @@ def _render_product_card_raw(p):
     size = p.get("size", "").strip()
     brand = p.get("brand", "").strip()
     category = int(p.get("category", 5))
-    image = p.get("image") or "assets/images/pride-165-65r13-gahar-tire.jpg"
+    image = p.get("image") or "assets/images/pride-165-65r13-gahar-tire.webp"
     link = p.get("link")
     available = bool(p.get("available", True))
     description = p.get("description", "")
@@ -102,7 +102,7 @@ def _render_product_card_raw(p):
                             </a>'''
 
     meta=[]
-    if vehicle: meta.append(f'<span class="badge rounded-pill bg-light text-secondary border">{esc(vehicle)}</span>')
+    if vehicle and re.search(r"\w", vehicle): meta.append(f'<a href="vehicles/{vehicle_slug(vehicle_label(vehicle))}.html" class="badge rounded-pill bg-light text-secondary border text-decoration-none" title="همهٔ لاستیک‌های {esc(vehicle)}">{esc(vehicle)}</a>')
     if size: meta.append(f'<span class="badge rounded-pill bg-light text-secondary border" dir="ltr">{esc(size)}</span>')
     if brand: meta.append(f'<span class="badge rounded-pill bg-light text-secondary border">{esc(brand)}</span>')
     meta_html='\n                                '.join(meta)
@@ -214,6 +214,17 @@ def process_images(s):
                 tag = tag[:-1].rstrip() + ' loading="lazy">'
         return tag
     return re.sub(r"<img\b[^>]*>", fix, s)
+
+
+def ensure_zoom(s):
+    """اسکریپت زوم تصویر (لایت‌باکس) را در صفحه‌هایی که تصویر محصول/گالری دارند اضافه می‌کند."""
+    if "zoom.js" in s or not ("style-main-img" in s or "gt-gallery" in s):
+        return s
+    m = re.search(r'src="((?:\.\./)*)assets/js/mobile\.js"', s)
+    if not m:
+        return s
+    tag = f'<script src="{m.group(1)}assets/js/zoom.js" defer></script>\n    '
+    return s.replace("</body>", tag + "</body>", 1)
 
 
 def process_icons_a11y(s):
@@ -482,6 +493,76 @@ def _size_guide_published():
 SIZE_GUIDE_PUBLISHED = _size_guide_published()
 
 
+def load_brands():
+    try:
+        return json.loads(read("brands.json"))
+    except Exception:
+        return {}
+
+
+BRANDS = load_brands()
+
+
+def brand_section(p):
+    """متن واقعی دربارهٔ برند از brands.json؛ اگر خالی باشد چیزی نمی‌سازد."""
+    brand = p.get("brand", "").strip()
+    b = BRANDS.get(brand) or {}
+    summary = (b.get("summary") or "").strip()
+    points = [x.strip() for x in (b.get("points") or []) if x and x.strip()]
+    if not summary and not points:
+        return None
+    html = f'<h3 class="h6 fw-bold text-dark mt-4 mb-2">دربارهٔ برند {esc(brand)}:</h3>'
+    if summary:
+        html += "\n" + "\n".join(f"<p>{esc(x.strip())}</p>" for x in summary.split("\n") if x.strip())
+    if points:
+        html += "\n" + ul(points)
+    return html
+
+
+def faq_section(p, products):
+    """پرسش و پاسخ مخصوص هر محصول؛ فقط از داده‌های واقعی کاتالوگ و محاسبهٔ ریاضی سایز ساخته می‌شود."""
+    size = p.get("size", "").strip()
+    brand = p.get("brand", "").strip()
+    veh = vehicle_label(p.get("vehicle", ""))
+    if not size:
+        return None
+    key = _norm_size(size)
+    pool = [q for q in catalog_pages(products) if _norm_size(q.get("size")) == key]
+    brands = []
+    for q in pool:
+        b = q.get("brand", "").strip()
+        if b and b not in brands:
+            brands.append(b)
+    others = [b for b in brands if b != brand]
+    vehicles = []
+    for q in pool:
+        if q.get("brand", "").strip() == brand:
+            v = vehicle_label(q.get("vehicle", ""))
+            if v and v not in vehicles:
+                vehicles.append(v)
+    f = size_facts(size)
+    qa = []
+    if vehicles:
+        qa.append((f"لاستیک {size} برند {brand} برای کدام خودرو ثبت شده است؟",
+                   f"در کاتالوگ گهرتایر خرم‌آباد، این مدل برای {' و '.join(vehicles)} ثبت شده است."))
+    if f and f["metric"]:
+        qa.append((f"قطر کلی و ارتفاع دیواره لاستیک {size} چقدر است؟",
+                   f"ارتفاع دیواره حدود {num(f['side_mm'])} میلی‌متر و قطر کلی حدود {num(f['diam_mm'])} میلی‌متر است (محاسبهٔ اسمی از روی سایز)."))
+    if f:
+        qa.append((f"لاستیک {size} روی چه رینگی نصب می‌شود؟",
+                   f"قطر رینگ مناسب این سایز {num(f['rim_in'])} اینچ است."))
+    if others:
+        qa.append((f"سایز {size} را با چه برندهای دیگری دارید؟",
+                   f"علاوه بر {brand}، این سایز در کاتالوگ با برند {' و '.join(others)} هم ثبت شده است؛ برای مقایسهٔ قیمت و موجودی هر برند تماس بگیرید."))
+    stock = "این مدل در کاتالوگ به‌صورت موجود ثبت شده است؛ " if p.get("available") else ""
+    qa.append((f"قیمت لاستیک {size} {brand} چقدر است؟",
+               f"{stock}قیمت روز با تماس یا واتساپ اعلام می‌شود و در سایت ثبت نشده است."))
+    html = '<h3 class="h6 fw-bold text-dark mt-4 mb-2">پرسش‌های رایج دربارهٔ این مدل:</h3>'
+    for qn, an in qa:
+        html += f'\n<p class="mb-2"><strong>{esc(qn)}</strong><br>{esc(an)}</p>'
+    return html
+
+
 def build_caption(p, products=None):
     title = product_title(p)
     main_t = title.partition(" | ")[0]
@@ -522,6 +603,14 @@ def build_caption(p, products=None):
         cmp_html = diameter_comparison(p, products)
         if cmp_html:
             parts.append(cmp_html)
+
+    bs = brand_section(p)
+    if bs:
+        parts.append(bs)
+    if products:
+        faq = faq_section(p, products)
+        if faq:
+            parts.append(faq)
 
     # ۴) جملهٔ کوتاه راهنمای خرید (لینک به مقالهٔ سایز اگر منتشر شده باشد)
     guide = ('برای مطمئن‌شدن از سایز، <a href="articles/size-guide.html" class="text-decoration-none">راهنمای خواندن سایز لاستیک</a> را ببینید؛ '
@@ -601,9 +690,9 @@ def product_meta(p):
     main_t = product_title(p).partition(" | ")[0]
     brand = p.get("brand", "").strip()
     _, use, _ = CAT_INFO.get(int(p["category"]), CAT_INFO[5])
-    warranty = "۲ سال ضمانت کتبی" in (p.get("description") or "")   # فقط اگر در داده‌ها ذکر شده باشد
-    tail = "؛ با ۲ سال ضمانت کتبی. استعلام قیمت و موجودی با تماس یا واتساپ." if warranty else "؛ استعلام قیمت و موجودی با تماس یا واتساپ."
-    return f"{main_t} | {brand} | گهرتایر", f"{main_t} برند {brand} در گهرتایر خرم‌آباد. مناسب {use}{tail}", main_t
+    tail = "؛ استعلام قیمت و موجودی با تماس یا واتساپ."
+    title_tail = "گهرتایر" if brand.replace(" ", "").replace("‌", "") == "گهرتایر" else f"{brand} | گهرتایر"
+    return f"{main_t} | {title_tail}", f"{main_t} برند {brand} در گهرتایر خرم‌آباد. مناسب {use}{tail}", main_t
 
 
 def generate_product_pages(products):
@@ -785,6 +874,156 @@ def generate_category_pages(products):
     print(f"category pages generated: {len(made)}")
 
 
+VEHICLE_SLUGS = {
+    "پژو": "peugeot", "سمند": "samand", "پراید": "pride", "هایلوکس": "hilux", "نیسان": "nissan",
+    "پیکان – تیبا": "peykan-tiba", "پیکان و تیبا": "peykan-tiba", "تیبا": "tiba", "دنا": "dena", "کامیونی": "truck",
+    "کامیونی جلو": "truck-front", "کامیونی عقب": "truck-rear", "کامیونی 911": "truck-911", "اتوبوسی": "bus",
+}
+
+
+def vehicle_slug(v):
+    """اسلاگ انگلیسی برای صفحهٔ خودرو (در URL فارسی نمی‌گذاریم)."""
+    key = (v or "").strip()
+    if key in VEHICLE_SLUGS:
+        return VEHICLE_SLUGS[key]
+    slug = re.sub(r"[^a-z0-9]+", "-", key.lower()).strip("-")
+    return slug or "other"
+
+
+def vehicle_groups_html(products):
+    """گروه‌های خودرو (سواری / وانت و آفرود / سنگین) برای صفحهٔ اصلی و صفحهٔ عمده؛ خودروها بر اساس نوع (سواری / وانت و آفرود / سنگین) گروه‌بندی می‌شوند."""
+    names, cats = {}, {}
+    for p in products:
+        if p.get("page") is False:
+            continue
+        veh = vehicle_label(p.get("vehicle", ""))
+        if veh and re.search(r"\w", veh):
+            names[veh] = names.get(veh, 0) + 1
+            cats.setdefault(veh, p.get("category"))
+
+    def _icon(slug):
+        if slug.startswith("truck") or slug == "bus":
+            return "fa-truck"
+        if slug in ("hilux", "nissan"):
+            return "fa-truck-pickup"
+        return "fa-car-side"
+
+    def _card(v, c):
+        return (f'<a href="vehicles/{vehicle_slug(v)}.html" class="gt-veh-card">'
+                f'<span class="gt-veh-ico"><i class="fa-solid {_icon(vehicle_slug(v))}" aria-hidden="true"></i></span>'
+                f'<span class="gt-veh-name">{esc(v)}</span><small>{fa(c)} محصول</small></a>')
+
+    GROUPS = [
+        ("سواری", "fa-car-side", (5,), "passenger-tires"),
+        ("وانت و آفرود", "fa-truck-pickup", (6, 7), None),
+        ("سنگین و کامیونی", "fa-truck", (8,), "heavy-tires"),
+    ]
+    used, panels = set(), []
+    for title, icon, cs, slug in GROUPS:
+        vs = sorted(v for v in names if cats.get(v) in cs)
+        used.update(vs)
+        if vs:
+            panels.append((title, icon, slug, vs))
+    rest = sorted(v for v in names if v not in used)
+    if rest:
+        panels.append(("سایر خودروها", "fa-car", None, rest))
+    groups_html = ""
+    for title, icon, slug, vs in panels:
+        more = f'<a class="gt-veh-all" href="categories/{slug}.html">مشاهده همهٔ {esc(title)} <i class="fa-solid fa-arrow-left" aria-hidden="true"></i></a>' if slug else ""
+        cards = "\n".join(_card(v, names[v]) for v in vs)
+        groups_html += (
+            f'        <section class="gt-veh-group">\n'
+            f'          <div class="gt-veh-ghead"><h4><i class="fa-solid {icon}" aria-hidden="true"></i> {esc(title)}</h4>{more}</div>\n'
+            f'          <div class="gt-veh-grid">\n{cards}\n          </div>\n'
+            f'        </section>\n')
+    return groups_html
+
+
+def render_vehicle_accordion(products):
+    """کشوی «انتخاب بر اساس خودرو» در صفحهٔ اصلی."""
+    groups_html = vehicle_groups_html(products)
+    return (
+        '<div class="gt-faq gt-veh mt-4">\n<div class="accordion" id="vehicleAcc">\n'
+        '  <div class="accordion-item">\n'
+        '    <h3 class="accordion-header">\n'
+        '      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#vehicleCollapse" aria-expanded="false" aria-controls="vehicleCollapse">'
+        '<span class="gt-veh-ico"><i class="fa-solid fa-car-side" aria-hidden="true"></i></span>'
+        '<span class="gt-veh-head"><strong>انتخاب لاستیک بر اساس نام خودرو</strong><small>روی خودروی خود بزنید و سایز و برند مناسب را ببینید</small></span></button>\n'
+        '    </h3>\n'
+        '    <div id="vehicleCollapse" class="accordion-collapse collapse" data-bs-parent="#vehicleAcc">\n'
+        '      <div class="accordion-body">\n'
+        f'{groups_html}'
+        '        <p class="gt-veh-note"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> سایز درج‌شده روی برچسب درِ خودرو یا دفترچهٔ راهنما را با سایز هر محصول تطبیق دهید، و برای قیمت و موجودی روز با ما تماس بگیرید.</p>\n'
+        '      </div>\n'
+        '    </div>\n'
+        '  </div>\n'
+        '</div>\n</div>'
+    )
+
+
+def render_wholesale_links(products):
+    """بخش «سایزهای قابل سفارش» صفحهٔ عمده: دسته‌ها و خودروهای گروه‌بندی‌شده (خودکار از کاتالوگ)."""
+    icons = {5: "fa-car-side", 6: "fa-truck-pickup", 7: "fa-mountain", 8: "fa-truck"}
+    cat_links = "\n".join(
+        f'<a class="ws-chip" href="categories/{c["slug"]}.html"><i class="fa-solid {icons.get(k, "fa-tire")} text-digi" aria-hidden="true"></i> {esc(c["short"])}</a>'
+        for k, c in CATEGORY_LANDINGS.items())
+    n = len([p for p in products if p.get("page") is not False])
+    return (
+        '<section class="mb-5" id="wsSizes">\n'
+        '  <div class="text-center mb-3"><h2 class="fw-extrabold fs-4">سایزهای قابل سفارش عمده در گهرتایر خرم‌آباد</h2></div>\n'
+        f'  <p class="text-secondary lh-lg text-center mx-auto" style="max-width:760px">در کاتالوگ نمایندگی گهرتایر (گهر تایر) خرم‌آباد {fa(n)} مدل لاستیک سواری، وانت، آفرود و سنگین ثبت شده است. سایزها را بر اساس دسته یا نام خودرو ببینید و در فرم بالا به لیست سفارش اضافه کنید.</p>\n'
+        f'  <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">{cat_links}</div>\n'
+        f'  <div class="gt-veh gt-veh-open">\n{vehicle_groups_html(products)}  </div>\n'
+        '</section>'
+    )
+
+
+def generate_vehicle_pages(products):
+    """به ازای هر نام خودرو یک صفحهٔ vehicles/<slug>.html می‌سازد که همهٔ لاستیک‌های ثبت‌شده برای آن خودرو را نشان می‌دهد."""
+    tpl = read("templates/category.html")
+    groups = {}
+    for p in products:
+        if p.get("page") is False:
+            continue
+        veh = vehicle_label(p.get("vehicle", ""))
+        if veh and re.search(r"\w", veh):
+            groups.setdefault(veh, []).append(p)
+    made = []
+    for veh, items in sorted(groups.items()):
+        items.sort(key=lambda q: (_norm_size(q.get("size")), q.get("brand", "")))
+        sizes = sorted({(q.get("size") or "").strip() for q in items if (q.get("size") or "").strip()})
+        brands = sorted({(q.get("brand") or "").strip() for q in items if (q.get("brand") or "").strip()})
+        title = f"لاستیک {veh} در خرم‌آباد | سایز و برند | گهرتایر"
+        desc = (f"لاستیک {veh} در گهر تایر خرم‌آباد: {len(items)} محصول با سایزهای "
+                f"{'، '.join(sizes[:3])}. استعلام قیمت و موجودی با تماس یا واتساپ.")
+        if len(desc) < 120:
+            desc += " سایز را با برچسب خودرو تطبیق دهید."
+        intro = (f"در این صفحه همهٔ لاستیک‌هایی را می‌بینید که در کاتالوگ گهرتایر (گهر تایر) خرم‌آباد برای {veh} ثبت شده‌اند. "
+                 f"سایز درج‌شده روی برچسب درِ خودرو یا دفترچهٔ راهنما را با سایز هر محصول تطبیق دهید.")
+        vals = {"title": esc(title), "meta_description": esc(desc), "h1": esc(f"لاستیک {veh} در خرم‌آباد"),
+                "intro": esc(intro), "category_summary": esc(f"{len(items)} محصول برای {veh} با سایزهای {'، '.join(sizes)}."),
+                "short_name": esc(f"{veh}"), "count": fa(len(items)), "products_html": render_products(items)}
+        out = re.sub(r"\{\{(\w+)\}\}", lambda m: vals.get(m.group(1), m.group(0)), tpl)
+        cat_id = int(items[0].get("category", 5))
+        cat_cfg = CATEGORY_LANDINGS.get(cat_id)
+        cat_link = f'<a href="categories/{cat_cfg["slug"]}.html">{esc(cat_cfg["short"])}</a>' if cat_cfg else ""
+        extra = (
+            '<section class="mb-5"><div class="card border-0 shadow-sm rounded-4 p-4 bg-white">'
+            f'<h2 class="h5 fw-bold text-dark mb-3">سایزهای ثبت‌شده برای {esc(veh)}</h2>'
+            f'<p class="text-secondary lh-lg mb-3">سایزهای موجود برای این خودرو: {esc("، ".join(sizes))}. '
+            f'هر سایز ممکن است از چند برند عرضه شود؛ برند و سایز را کنار هم بگذارید و برای قیمت و موجودی روز استعلام کنید.</p>'
+            '<p class="text-secondary lh-lg mb-0">برای خواندن سایز روی دیواره لاستیک، '
+            '<a href="articles/size-guide.html">راهنمای سایز لاستیک</a> را ببینید. '
+            + (f'همهٔ لاستیک‌های این دسته را در {cat_link} ببینید.' if cat_link else '') +
+            '</p></div></section>\n'
+        )
+        out = out.replace("  </main>", extra + "  </main>", 1)
+        page = f"vehicles/{vehicle_slug(veh)}.html"
+        write(page, out)
+        made.append(page)
+    print(f"vehicle pages generated: {len(made)}")
+
+
 def is_redirect_stub(text):
     return "@@redirect-stub" in text or ('http-equiv="refresh"' in text and "noindex,follow" in text and len(text) < 2000)
 
@@ -913,6 +1152,8 @@ def ld_script(obj):
 
 def og_image(path):
     """(آدرس مطلق، عرض، ارتفاع) برای تصویر؛ JPG/PNG اصلی را به WebP ترجیح می‌دهد (سازگاری بهتر با تلگرام/واتساپ)."""
+    if path and os.path.splitext(path)[1].lower() in (".jpg", ".jpeg", ".png") and os.path.exists(os.path.splitext(path)[0] + ".webp"):
+        path = os.path.splitext(path)[0] + ".webp"
     if not SITE_URL or not path or not os.path.exists(path):
         return None
     w = h = None
@@ -928,10 +1169,11 @@ def og_image(path):
 def business_node():
     b = SEO["business"]
     node = {"@type": b.get("type", "LocalBusiness"), "name": b["name"], "description": b.get("description", ""),
+            **({"alternateName": b["alternate_names"]} if b.get("alternate_names") else {}),
             "telephone": b["phone"],
-            "address": {"@type": "PostalAddress", "addressLocality": b["city"], "streetAddress": b["street"],
+            "address": {"@type": "PostalAddress", "addressLocality": b["city"], "addressRegion": b.get("region", ""), "streetAddress": b["street"],
                         "addressCountry": b.get("country", "IR")},
-            "areaServed": {"@type": "City", "name": b["city"]}}
+            "areaServed": [{"@type": "City", "name": b["city"]}] + ([{"@type": "AdministrativeArea", "name": b["region"]}] if b.get("region") else [])}
     if b.get("hours"):
         node["openingHoursSpecification"] = [{"@type": "OpeningHoursSpecification", "dayOfWeek": b["hours"]["days"],
                                               "opens": b["hours"]["opens"], "closes": b["hours"]["closes"]}]
@@ -996,7 +1238,7 @@ def build_seo_block(page, s, prod, products_by_page, catalog):
     if page == "index.html":
         if SITE_URL:
             ld.append({"@context": "https://schema.org", "@type": "WebSite", "@id": SITE_URL + "/#website", "url": SITE_URL + "/",
-                       "name": SEO["site_name"], "inLanguage": "fa", "publisher": {"@id": SITE_URL + "/#business"}})
+                       "name": SEO["site_name"], "alternateName": SEO.get("site_alternate_name", ""), "inLanguage": "fa", "publisher": {"@id": SITE_URL + "/#business"}})
         ld.append({"@context": "https://schema.org", **business_node()})
     elif page == "contact.html":
         ld.append({"@context": "https://schema.org", **business_node()})
@@ -1011,6 +1253,18 @@ def build_seo_block(page, s, prod, products_by_page, catalog):
                        "numberOfItems": len(items),
                        "itemListElement": [{"@type": "ListItem", "position": i, "name": product_title(q).partition(" | ")[0],
                                             "url": page_url(q["link"])} for i, q in enumerate(items, 1)]})
+    elif page.startswith("vehicles/"):
+        veh_items = [q for q in catalog if q.get("link") and q.get("page") is not False
+                     and re.search(r"\w", vehicle_label(q.get("vehicle", ""))) and vehicle_slug(vehicle_label(q.get("vehicle", ""))) == page[len("vehicles/"):-len(".html")]]
+        if SITE_URL and veh_items:
+            ld.append({"@context": "https://schema.org", "@type": "CollectionPage", "name": h1,
+                       "url": page_url(page), "description": desc, "inLanguage": "fa"})
+            ld.append({"@context": "https://schema.org", "@type": "ItemList", "name": h1,
+                       "numberOfItems": len(veh_items),
+                       "itemListElement": [{"@type": "ListItem", "position": i, "name": product_title(q).partition(" | ")[0],
+                                            "url": page_url(q["link"])} for i, q in enumerate(veh_items, 1)]})
+            bc = breadcrumb_ld([crumb_home, ("فروشگاه", page_url("products.html")), (h1, page_url(page))])
+            if bc: ld.append(bc)
     elif page.startswith("categories/"):
         slug = page[len("categories/"):-len(".html")]
         cat = CATEGORY_BY_SLUG.get(slug)
@@ -1066,6 +1320,14 @@ def build_seo_block(page, s, prod, products_by_page, catalog):
                        "publisher": {"@id": SITE_URL + "/#business"}})
             bc = breadcrumb_ld([crumb_home, ("راهنمای خرید", page_url("articles.html")), (h1, page_url(page))])
             if bc: ld.append(bc)
+    elif page == "wholesale.html" and SITE_URL:
+        bz = SEO["business"]
+        ld.append({"@context": "https://schema.org", "@type": "Service", "name": h1 or title, "serviceType": "فروش عمده لاستیک",
+                   "url": page_url(page), "description": desc, "inLanguage": "fa",
+                   "provider": {"@type": bz.get("type", "LocalBusiness"), "name": bz["name"], "url": SITE_URL + "/", "telephone": bz["phone"]},
+                   "areaServed": [{"@type": "City", "name": bz["city"]}] + ([{"@type": "AdministrativeArea", "name": bz["region"]}] if bz.get("region") else [])})
+        bc = breadcrumb_ld([crumb_home, (crumb_name, page_url(page))])
+        if bc: ld.append(bc)
     elif crumb_name and SITE_URL:
         ld.append(breadcrumb_ld([crumb_home, (crumb_name, page_url(page))]))
 
@@ -1123,6 +1385,7 @@ products = json.loads(read("products.json"))
 validate_catalog(products)
 generate_product_pages(products)
 generate_category_pages(products)
+generate_vehicle_pages(products)
 try:
     articles = json.loads(read("articles.json"))
 except Exception:
@@ -1174,7 +1437,7 @@ def to_page_form(s, page):
     return ATTR_RE.sub(lambda m: m.group(1) + (m.group(2) if not m.group(2) or m.group(2).startswith(NOT_REL) else prefix + m.group(2)) + m.group(3), s)
 
 
-all_pages = sorted({f for g in ("*.html", "products/*.html", "categories/*.html", "articles/*.html") for f in pages_in(g)} - set(REDIRECTS))
+all_pages = sorted({f for g in ("*.html", "products/*.html", "categories/*.html", "articles/*.html", "vehicles/*.html") for f in pages_in(g)} - set(REDIRECTS))
 for page in all_pages:
     s = to_root_form(read(page), page)
     act = active_for(page)
@@ -1189,6 +1452,9 @@ for page in all_pages:
             s = s.replace("<!-- @@footer:start -->", "<!-- @@cta:start -->\n<!-- @@cta:end -->\n\n    <!-- @@footer:start -->", 1)
         s = re.sub(r"<!-- @@cta:start -->.*?<!-- @@cta:end -->",
                    lambda m: "<!-- @@cta:start -->\n" + cta + "\n<!-- @@cta:end -->", s, flags=re.S)
+    if page == "index.html":
+        s = re.sub(r"<!-- @@vehicles:start -->.*?<!-- @@vehicles:end -->",
+                   lambda m: "<!-- @@vehicles:start -->\n" + render_vehicle_accordion(products) + "\n<!-- @@vehicles:end -->", s, flags=re.S)
     if page == "products.html":
         s = re.sub(r'<span id="pcount">\d+</span> کالا', f'<span id="pcount">{len(products)}</span> کالا', s, count=1)
         if "<!-- @@products:start -->" not in s:
@@ -1202,11 +1468,14 @@ for page in all_pages:
             _slug = _cfg["slug"]
             s = re.sub(rf'href="products\.html\?category={_cat}"', f'href="categories/{_slug}.html"', s)
     if page == "wholesale.html":
+        s = re.sub(r"<!-- @@wsvehicles:start -->.*?<!-- @@wsvehicles:end -->",
+                   lambda m: "<!-- @@wsvehicles:start -->\n" + render_wholesale_links(products) + "\n<!-- @@wsvehicles:end -->", s, flags=re.S)
         s = re.sub(r"<!-- @@wsmodels:start -->.*?<!-- @@wsmodels:end -->",
                    lambda m: "<!-- @@wsmodels:start -->\n" + render_wholesale_options(products) + "\n<!-- @@wsmodels:end -->",
                    s, flags=re.S)
     s = process_head(s)
     s = process_images(s)
+    s = ensure_zoom(s)
     s = process_icons_a11y(s)
     if page not in SEO_SKIP:
         cfg = SEO_PAGES.get(page, {})

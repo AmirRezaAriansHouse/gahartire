@@ -2,7 +2,7 @@
   "name": "گهرتایر خرم‌آباد",
   "short_name": "گهرتایر",
   "description": "نمایندگی رسمی گهرتایر در خرم‌آباد؛ عرضهٔ لاستیک سواری، وانت، آفرود و سنگین.",
-  "start_url": "/index.html",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
