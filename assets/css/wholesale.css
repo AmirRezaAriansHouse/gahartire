@@ -19,10 +19,6 @@
 .ws-card h5 { font-weight: 800; font-size: 1rem; }
 .ws-card p { color: #6b7280; font-size: .86rem; line-height: 1.9; margin: 0; }
 
-.ws-step { display: flex; gap: 14px; align-items: flex-start; background: #fff; border-radius: 18px; padding: 18px; box-shadow: 0 4px 16px rgba(0, 0, 0, .05); height: 100%; }
-.ws-num { flex: 0 0 42px; height: 42px; border-radius: 50%; background: var(--gt-red); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
-.ws-step h6 { font-weight: 800; margin-bottom: 4px; }
-.ws-step p { margin: 0; color: #6b7280; font-size: .86rem; line-height: 1.9; }
 
 .ws-form-box { background: #fff; border-radius: 28px; padding: 36px; box-shadow: 0 15px 40px rgba(0, 0, 0, .05); }
 .ws-form-box .form-control, .ws-form-box .form-select { border-radius: 14px; padding: .75rem 1rem; background: #f7f8fa; border: 2px solid transparent; }
@@ -81,3 +77,72 @@
     .ws-form-box { padding: 22px 16px; }
 }
 #wsOrder { scroll-margin-top: 110px; }
+
+/* بخش «چرا خرید عمده»: ۳ کارت هم‌عرض و وسط‌چین (row-cols-lg-3 در بوت‌استرپ purge شده وجود ندارد) */
+@media (min-width: 992px) { .row.row-cols-lg-3 > * { flex: 0 0 auto; width: 33.3333%; } }
+
+/* ===================== بهبود طراحی v16 ===================== */
+/* هیرو */
+.ws-hero { box-shadow: 0 20px 50px rgba(27, 29, 33, .18); }
+.ws-hero-wheel { position: absolute; left: 6%; top: 50%; margin-top: -120px; font-size: 240px; color: rgba(239, 64, 86, .16); animation: wsSpin 60s linear infinite; z-index: 0; pointer-events: none; }
+@keyframes wsSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ws-hero-wheel { animation: none; } }
+.ws-points { gap: 8px; }
+.ws-points li { background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .12); border-radius: 50px; padding: 6px 14px; font-size: .85rem; }
+
+/* کارت‌ها */
+.ws-card { transition: transform .25s, box-shadow .25s; border: 1px solid rgba(0, 0, 0, .03); }
+.ws-card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(239, 64, 86, .10); }
+
+/* مراحل */
+.ws-steps { margin: 0; padding: 0; display: grid; gap: 14px; grid-template-columns: 1fr; counter-reset: none; }
+.ws-step { position: relative; display: flex; gap: 14px; align-items: flex-start; background: #fff; border-radius: 18px; padding: 18px; box-shadow: 0 4px 16px rgba(0, 0, 0, .05); border: 1px solid rgba(0, 0, 0, .03); }
+.ws-num { position: relative; z-index: 1; flex: 0 0 42px; height: 42px; border-radius: 50%; background: var(--gt-red-grad, var(--gt-red)); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 14px rgba(239, 64, 86, .28); }
+.ws-step-title { font-weight: 800; font-size: 1rem; margin: 2px 0 4px; }
+.ws-step p { margin: 0; color: #6b7280; font-size: .86rem; line-height: 1.9; }
+@media (max-width: 767.98px) {
+    .ws-step:not(:last-child)::after { content: ""; position: absolute; top: 60px; right: 38px; height: calc(100% - 60px + 14px + 18px); border-right: 2px dashed #f3a5b1; z-index: 0; }
+}
+@media (min-width: 768px) { .ws-steps { grid-template-columns: repeat(2, 1fr); gap: 16px; } }
+@media (min-width: 992px) {
+    .ws-steps { grid-template-columns: repeat(4, 1fr); gap: 18px; }
+    .ws-step { flex-direction: column; gap: 12px; padding: 20px 18px; }
+    .ws-step:not(:last-child)::after { content: ""; position: absolute; top: 39px; left: -18px; width: 18px; border-top: 2px dashed #f3a5b1; }
+}
+
+/* فرم */
+.ws-form-box { position: relative; overflow: hidden; border: 1px solid rgba(0, 0, 0, .03); }
+.ws-form-box::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--gt-red-grad, var(--gt-red)); }
+#wsRows { counter-reset: wsrow; }
+.ws-row { position: relative; counter-increment: wsrow; padding-top: 22px; margin-top: 8px; }
+.ws-row::before { content: "مدل " counter(wsrow, persian); position: absolute; top: -11px; right: 16px; background: #fff; color: var(--gt-red); border: 2px solid #ffe0e5; border-radius: 50px; padding: 1px 12px; font-size: .74rem; font-weight: 800; line-height: 1.7; }
+.ws-summary { background: #fff1f3; border-radius: 50px; padding: 6px 14px; font-size: .84rem; }
+
+/* راهنما */
+.ws-article { border: 1px solid rgba(0, 0, 0, .03); }
+.ws-article-go { margin-right: auto; width: 36px; height: 36px; flex: 0 0 36px; border-radius: 50%; background: #ffe8ec; color: var(--gt-red); display: inline-flex; align-items: center; justify-content: center; font-size: .85rem; transition: transform .25s; }
+.ws-article:hover .ws-article-go { transform: translateX(-4px); }
+
+/* بخش سایزها */
+.gt-veh-open .gt-veh-group { box-shadow: 0 6px 20px rgba(0, 0, 0, .03); }
+
+/* موبایل: کارت‌های افقی و فشرده */
+@media (max-width: 767.98px) {
+    main > section.mb-5 { margin-bottom: 2rem !important; }
+    .ws-hero-wheel { font-size: 150px; left: -30px; top: auto; bottom: -30px; margin-top: 0; }
+    .ws-points li { font-size: .78rem; padding: 5px 11px; }
+    .ws-grid { --bs-gutter-y: .6rem; }
+    .ws-grid > * { flex: 0 0 100%; width: 100%; }
+    .ws-card { display: grid; grid-template-columns: 46px 1fr; column-gap: 14px; row-gap: 2px; align-items: center; text-align: right; padding: 14px 16px; }
+    .ws-card .ws-ico { grid-row: span 2; margin: 0; }
+    .ws-card h5 { margin: 0; font-size: .95rem; align-self: end; }
+    .ws-card p { font-size: .8rem; line-height: 1.7; align-self: start; }
+    .ws-row { padding-top: 24px; }
+    .ws-article { padding: 14px; gap: 12px; }
+    .ws-article .ws-ico { flex-basis: 46px; width: 46px; height: 46px; }
+    .ws-article-go { display: none; }
+}
+
+/* اصلاحات */
+.ws-num { width: 42px; min-width: 42px; }
+.ws-hero::after { display: none; }

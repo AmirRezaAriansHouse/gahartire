@@ -59,12 +59,12 @@ main h1.h2.fw-extrabold::after {
 main .text-center > h2.fw-extrabold::after, main .text-center > h1.h2.fw-extrabold::after, main h2.fw-extrabold.text-center::after { margin-right: auto; margin-left: auto; }
 
 /* ---------- آیکون‌ها: حلقه خط‌چین چرخان (مثل رینگ) ---------- */
-.gt-service-icon, .gt-feature-icon, .ws-ico { position: relative; }
-.gt-service-icon::after, .gt-feature-icon::after, .ws-ico::after {
+.gt-service-icon, .gt-feature-icon, .ws-ico, .gt-trust-item .ico { position: relative; }
+.gt-service-icon::after, .gt-feature-icon::after, .ws-ico::after, .gt-trust-item .ico::after {
     content: ""; position: absolute; inset: -6px; border-radius: 50%;
     border: 2px dashed rgba(239, 64, 86, .38); transition: transform .8s ease;
 }
-.gt-feature:hover .gt-feature-icon::after, .ws-card:hover .ws-ico::after, .gt-service:hover .gt-service-icon::after { transform: rotate(180deg); }
+.gt-feature:hover .gt-feature-icon::after, .ws-card:hover .ws-ico::after, .gt-trust-item:hover .ico::after, .gt-service:hover .gt-service-icon::after { transform: rotate(180deg); }
 
 /* ---------- هیرو صفحه اصلی: لاستیک واقعی + بافت آج ---------- */
 .gt-hero { position: relative; background-image: var(--tread-faint), radial-gradient(circle at top left, #ffffff, #f4f5f8); }
